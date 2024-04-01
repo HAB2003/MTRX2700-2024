@@ -27,8 +27,9 @@
 // store a pointer to the function that is called when a button is pressed
 // set a default value of NULL so that it won't be called until the
 // function pointer is defined
-void (*on_button_press)() = 0x00;
+void (*on_button_press)() = 0x00;		//on_button_press is a pointer to a 32 bit location in memory where code can run
 
+//override the default handler
 void EXTI0_IRQHandler(void)
 {
 	// run the button press handler (make sure it is not null first !)
@@ -52,7 +53,7 @@ void enable_clocks() {
 void initialise_board() {
 	// get a pointer to the second half word of the MODER register (for outputs pe8-15)
 	uint16_t *led_output_registers = ((uint16_t *)&(GPIOE->MODER)) + 1;
-	*led_output_registers = 0x5555;
+	*led_output_registers = 0x5555;					//set LEDs to be able to be written to
 }
 
 
@@ -67,7 +68,7 @@ void enable_interrupt() {
 	// External Interrupts details on large manual page 294)
 	// PA0 is on interrupt EXTI0 large manual - page 250
 	// EXTI0 in  SYSCFG_EXTICR1 needs to be 0x00 (SYSCFG_EXTICR1_EXTI0_PA)
-	SYSCFG->EXTICR[0] = SYSCFG_EXTICR1_EXTI0_PA;
+	SYSCFG->EXTICR[0] = SYSCFG_EXTICR1_EXTI0_PA;			//we use EXTI0 as the button is PA0
 
 	//  Select EXTI0 interrupt on rising edge
 	EXTI->RTSR |= EXTI_RTSR_TR0; // rising edge of EXTI line 0 (includes PA0)
@@ -85,11 +86,11 @@ void enable_interrupt() {
 
 
 void chase_led(){
-	uint8_t *led_register = ((uint8_t*)&(GPIOE->ODR)) + 1;
+	uint8_t *led_register = ((uint8_t*)&(GPIOE->ODR)) + 1;		//creates a pointer to the memory corresponding to the LEDs
 
-	*led_register <<= 1;
-	if (*led_register == 0) {
-		*led_register = 1;
+	*led_register <<= 1;		//shift the LED pattern once to the left
+	if (*led_register == 0) {		//led_register will be 0 if you shift the 1 off the end of the 8 bits
+		*led_register = 1;			//if this happens, enter a new 1 into the register
 	}
 }
 
@@ -100,10 +101,10 @@ int main(void)
 	initialise_board();
 
 	// set the interrupt handling function
-	on_button_press = &chase_led;
+	on_button_press = &chase_led;				//the function pointer, points to where chase_led is
 
 	// enable the interrupt for the button
-	enable_interrupt();
+	enable_interrupt();					//without enabling the interrupts, the program would only enable clocks, initialise board and loop forever
 
     /* Loop forever */
 	for(;;) {}
