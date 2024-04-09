@@ -21,10 +21,9 @@
 #include <stdio.h>
 
 #include "serial.h"
-#include "movement.h"
-
 
 #include "stm32f303xc.h"
+#define PART 'A'
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
 #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
@@ -42,80 +41,23 @@ void finished_transmission(uint32_t bytes_sent) {
 }
 
 
-void ShapeDemo();
-const int NUMBER_OF_SHAPES = 16;
-
-
 int main(void)
 {
-	uint8_t *string_to_send = "This is a string !\r\n";
-
-	//void (*completion_function)(uint32_t) = &finished_transmission;
 
 	SerialInitialise(BAUD_115200, &USART1_PORT, &finished_transmission);
 
-	ShapeDemo();
+	if(PART == 'A'){
+		char storage_buffer[BUFFER_SIZE];
 
-	/* Loop forever */
-	for(;;) {
-		SerialOutputString(string_to_send, &USART1_PORT);
-	}
-}
-
-
-void ShapeDemo(void) {
-
-	struct shape shape_1 = generate_shape(SHAPE_SPHERE, 5, 5);
-	struct shape shape_2;
-	struct shape *shape_3;
-
-	struct shape shape_array[16];
-
-	uint8_t string_buffer[64];
-
-	shape_string(&shape_1, &string_buffer[0]);
-	SerialOutputString(&string_buffer[0], &USART1_PORT);
-
-	shape_string(&shape_2, &string_buffer[0]);
-	SerialOutputString(&string_buffer[0], &USART1_PORT);
-
-	shape_3 = (struct shape*)malloc(sizeof(struct shape));
-	shape_string(shape_3, &string_buffer[0]);
-	SerialOutputString(&string_buffer[0], &USART1_PORT);
-
-	*shape_3 = generate_shape(SHAPE_CONE, 6,3);
-	shape_string(shape_3, &string_buffer[0]);
-	SerialOutputString(&string_buffer[0], &USART1_PORT);
-
-
-	for (uint32_t counter = 0; counter < NUMBER_OF_SHAPES; counter++) {
-		if (initialise_shape(&shape_array[counter], counter % 3, 3, 4)) {
-			shape_string(&shape_array[counter], &string_buffer[0]);
-			SerialOutputString(&string_buffer[0], &USART1_PORT);
-		} else {
-			shape_string(&shape_array[counter], &string_buffer[0]);
-			SerialOutputString(&string_buffer[0], &USART1_PORT);
+		for(;;) {
+			//SerialInputString(USART1_PORT.incoming_buffer, &USART1_PORT);
+			SerialInputString(storage_buffer, &USART1_PORT);
+			SerialOutputString(storage_buffer, &USART1_PORT);
 		}
 	}
 
-	// slide the shapes
-	sprintf(&string_buffer[0], "sliding the shapes by 1.5 units\r\n");
-	SerialOutputString(&string_buffer[0], &USART1_PORT);
+	if(PART == 'B'){
 
-	for (uint32_t counter = 0; counter < NUMBER_OF_SHAPES; counter++) {
-		slide_shape(&shape_array[counter], 1.5);
-		shape_string(&shape_array[counter], &string_buffer[0]);
-		SerialOutputString(&string_buffer[0], &USART1_PORT);
-	}
-
-	// roll the shapes
-	sprintf(&string_buffer[0], "rolling the shapes by 2.5 units\n");
-	SerialOutputString(&string_buffer[0], &USART1_PORT);
-	for (uint32_t counter = 0; counter < NUMBER_OF_SHAPES; counter++) {
-		roll_shape(&shape_array[counter], 2.5);
-		shape_string(&shape_array[counter], &string_buffer[0]);
-		SerialOutputString(&string_buffer[0], &USART1_PORT);
 	}
 
 }
-

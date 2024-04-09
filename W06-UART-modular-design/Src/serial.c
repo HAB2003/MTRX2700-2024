@@ -2,6 +2,8 @@
 
 #include "stm32f303xc.h"
 
+
+
 // We store the pointers to the GPIO and USART that are used
 //  for a specific serial port. To add another serial port
 //  you need to select the appropriate values.
@@ -16,6 +18,8 @@ struct _SerialPort {
 	volatile uint32_t SerialPinAlternatePinValueLow;
 	volatile uint32_t SerialPinAlternatePinValueHigh;
 	void (*completion_function)(uint32_t);
+	//volatile uint8_t incoming_buffer[BUFFER_SIZE];
+	//volatile uint8_t buffer_count;
 };
 
 
@@ -31,7 +35,9 @@ SerialPort USART1_PORT = {USART1,
 		0xF00,
 		0x770000,  // for USART1 PC10 and 11, this is in the AFR low register
 		0x00, // no change to the high alternate function register
-		0x00 // default function pointer is NULL
+		0x00, // default function pointer is NULL
+		//0x00,	//incoming buffer is NULL by default
+		//0x00	//buffer counter begins at 0
 		};
 
 
@@ -70,19 +76,19 @@ void SerialInitialise(uint32_t baudRate, SerialPort *serial_port, void (*complet
 	switch(baudRate){
 	case BAUD_9600:
 		// NEED TO FIX THIS !
-		*baud_rate_config = 0x46;  // 115200 at 8MHz
+		*baud_rate_config = 0x341;  // 9600 at 8MHz				//needs to be finished
 		break;
 	case BAUD_19200:
 		// NEED TO FIX THIS !
-		*baud_rate_config = 0x46;  // 115200 at 8MHz
+		*baud_rate_config = 0x1A1;  // 19200 at 8MHz
 		break;
 	case BAUD_38400:
 		// NEED TO FIX THIS !
-		*baud_rate_config = 0x46;  // 115200 at 8MHz
+		*baud_rate_config = 0xD0;  // 38400 at 8MHz
 		break;
 	case BAUD_57600:
 		// NEED TO FIX THIS !
-		*baud_rate_config = 0x46;  // 115200 at 8MHz
+		*baud_rate_config = 0x8B;  // 57600 at 8MHz
 		break;
 	case BAUD_115200:
 		*baud_rate_config = 0x46;  // 115200 at 8MHz
@@ -108,7 +114,7 @@ void SerialOutputChar(uint8_t data, SerialPort *serial_port) {
 void SerialOutputString(uint8_t *pt, SerialPort *serial_port) {
 
 	uint32_t counter = 0;
-	while(*pt) {
+	while(*pt != '0') {
 		SerialOutputChar(*pt, serial_port);
 		counter++;
 		pt++;
@@ -116,6 +122,62 @@ void SerialOutputString(uint8_t *pt, SerialPort *serial_port) {
 
 	serial_port->completion_function(counter);
 }
+
+void SerialIntputChar(uint8_t *data, SerialPort *serial_port) {
+
+	while((serial_port->UART->ISR & USART_ISR_RXNE) == 0){
+		//wait until there is data to be received
+	}
+
+	*data = serial_port->UART->RDR;
+}
+
+void SerialInputString(uint8_t *buffer, SerialPort *serial_port) {
+    uint32_t counter = 0;
+    while (1) {
+        uint8_t received_char;
+        SerialIntputChar(&received_char, serial_port); // Receive a character
+
+        if (received_char == '\r') {
+            // If carriage return is received, terminate the string
+        	buffer[counter] = '0';
+            break;
+        }
+
+        buffer[counter++] = received_char; // Store received character in buffer
+
+        if (counter >= BUFFER_SIZE - 1) {
+            // Prevent Buffer Overflow
+            break;
+        }
+    }
+}
+
+/*void SerialInputString(uint8_t *pt, SerialPort *serial_port) {
+    uint32_t counter = 0;
+    while (1) {
+        uint8_t received_char;
+        SerialIntputChar(&received_char, serial_port); // Receive a character
+
+        if (received_char == '\r') {
+            // If carriage return is received, terminate the string
+            break;
+        }
+        serial_port->incoming_buffer[counter++] = received_char;
+        //buffer[counter++] = received_char; // Store received character in buffer
+        buffer_count++;
+        if (counter >= BUFFER_SIZE) {
+            // Prevent Buffer Overflow
+            break;
+        }
+    }
+    uint8_t storage_buffer[BUFFER_SIZE];
+
+    for(int i = 0; i <= buffer_count, i++){
+    	storage_buffer[i]= incoming_buffer[i];
+    }
+}*/
+
 
 
 

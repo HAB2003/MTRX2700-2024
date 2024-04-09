@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 
+#define BUFFER_SIZE 100
+
 // Defining the serial port struct, the definition is hidden in the
 // c file as no one really needs to know this.
 struct _SerialPort;
@@ -40,5 +42,11 @@ void SerialOutputChar(uint8_t, SerialPort *serial_port);
 // Input: pointer to a NULL-TERMINATED string (if not null terminated, there will be problems)
 void SerialOutputString(uint8_t *pt, SerialPort *serial_port);
  
+// SerialInputChar - receive a NULL TERMINATED string from the serial port
+void SerialIntputChar(uint8_t *data, SerialPort *serial_port);
+
+void SerialInputString(uint8_t *buffer, SerialPort *serial_port);
+
+//void SerialInputString(SerialPort *serial_port);
  
 #endif
